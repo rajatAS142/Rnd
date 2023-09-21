@@ -495,8 +495,8 @@ def clt_parser():
     final_metadata = define_clt_metadata_table()
     final_data = define_clt_data_table()
 
-    cltconfig1 = pd.read_csv("gs://{0}/cf_test_input/clt_config/clt/cltconfig1.csv".format(bucket_name),dtype=str)
-    cltconfig2 = pd.read_csv("gs://{0}/cf_test_input/clt_config/clt/cltconfig2.csv".format(bucket_name),dtype=str)
+    cltconfig1 = pd.read_csv("gs://{0}/databricks_run/clt_config/clt/cltconfig1.csv".format(bucket_name),dtype=str)
+    cltconfig2 = pd.read_csv("gs://{0}/databricks_run/clt_config/clt/cltconfig2.csv".format(bucket_name),dtype=str)
 
     diff = len(cltconfig2)-len(cltconfig1)
     cltconfig = cltconfig2.tail(diff)
@@ -724,7 +724,7 @@ def hut_data_ingestion(data, data_meta, master):
     data_meta.columns = [x.lower() for x in data_meta.columns]
 
 
-    ##Master data
+    ## Master data
     l = list(master.columns)
     l.remove('Number_of_response_options')
     l.remove('numerical_response_map')
@@ -735,6 +735,7 @@ def hut_data_ingestion(data, data_meta, master):
     master['Number_of_response_options'] = master['Number_of_response_options'].astype('int64')
     master["numerical_response_map"].fillna("{}", inplace = True)
     master.columns = [x.lower() for x in master.columns]
+    ## END
 
     db = sqlalchemy.create_engine(
             "postgresql+pg8000://",
@@ -743,17 +744,17 @@ def hut_data_ingestion(data, data_meta, master):
         )
     
     print("DATA INGESTION PROCESS STARTED...")
-    data.to_sql('hut_data_labelled_updated', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi')
-    data_meta.to_sql('hut_metadata_labelled_updated', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi', dtype={'product_description': sqlalchemy.types.JSON,'fragrance_id': sqlalchemy.types.JSON})
-    master.to_sql('hut_master_data_updated', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi',dtype={'numerical_response_map': sqlalchemy.types.JSON})
+    data.to_sql('hut_data_labelled', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi')
+    #data_meta.to_sql('hut_metadata_labelled_updated', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi', dtype={'product_description': sqlalchemy.types.JSON,'fragrance_id': sqlalchemy.types.JSON})
+    master.to_sql('hut_master_data', con = db, index=False, if_exists = 'append', chunksize = 1000, method='multi',dtype={'numerical_response_map': sqlalchemy.types.JSON})
     print("DATA INGESTION PROCESS FINISHED!!")
 
 def hut_parser():
     final_metadata = define_hut_metadata_table()
     final_data = define_hut_data_table()
     master_data = define_hut_master_table()
-    hutconfig1 = pd.read_csv("gs://{0}/cf_test_input/hutconfig/hutconfig1.csv".format(bucket_name),dtype=str)
-    hutconfig2 = pd.read_csv("gs://{0}/cf_test_input/hutconfig/hutconfig2.csv".format(bucket_name),dtype=str)
+    hutconfig1 = pd.read_csv("gs://{0}/databricks_run/hutconfig/hutconfig1.csv".format(bucket_name),dtype=str)
+    hutconfig2 = pd.read_csv("gs://{0}/databricks_run/hutconfig/hutconfig2.csv".format(bucket_name),dtype=str)
 
     diff = len(hutconfig2)-len(hutconfig1)
     hutconfig = hutconfig2.tail(diff)
@@ -766,7 +767,7 @@ def hut_parser():
 
     for row in range(0, len(hutconfig)):#len(hutconfig)
         file = hutconfig.iloc[row].Filename
-        filename = "gs://{0}/cf_test_input/{1}".format(bucket_name,file)
+        filename = "gs://{0}/databricks_run/{1}".format(bucket_name,file)
         
         #checking extension of file
         file_extension = pathlib.Path(filename).suffix
@@ -881,7 +882,7 @@ def hut_parser():
     del final_data
     del final_metadata
 
-    hutconfig2.to_csv(f"gs://{bucket_name}/cf_test_input/hutconfig/hutconfig1.csv", encoding='utf-8', index=False, header=True)
+    hutconfig2.to_csv(f"gs://{bucket_name}/databricks_run/hutconfig/hutconfig1.csv", encoding='utf-8', index=False, header=True)
     print("PROCESS COMPLETE !!")
     return
         
